@@ -4,14 +4,21 @@ import {
   SKILLS,
   filterProjects,
   filterSkills,
+  getProjectById,
+  resolveTheme,
+  toggleTheme,
   validateContactForm,
   buildMailtoHref,
 } from './portfolioData.js';
 
-function renderProjectCard(project) {
+const THEME_STORAGE_KEY = 'akash_portfolio_theme';
+
+function renderProjectCard(project, onOpenDetails) {
   const article = document.createElement('article');
   article.className = 'project-card';
   article.dataset.category = project.category;
+
+  const top = document.createElement('div');
 
   const meta = document.createElement('div');
   meta.className = 'meta-line';
@@ -37,8 +44,18 @@ function renderProjectCard(project) {
   desc.className = 'project-desc';
   desc.textContent = project.description;
 
+  top.append(meta, title, subtitle, desc);
+
   const footer = document.createElement('div');
   footer.className = 'project-footer';
+
+  const detailsBtn = document.createElement('button');
+  detailsBtn.type = 'button';
+  detailsBtn.className = 'btn btn-ghost';
+  detailsBtn.setAttribute('data-open-project', project.id);
+  detailsBtn.setAttribute('aria-label', `View details for ${project.title}`);
+  detailsBtn.textContent = 'View Details';
+  detailsBtn.addEventListener('click', () => onOpenDetails(project, detailsBtn));
 
   const link = document.createElement('a');
   link.className = 'btn btn-secondary';
@@ -47,20 +64,85 @@ function renderProjectCard(project) {
   link.rel = 'noopener noreferrer';
   link.textContent = project.linkLabel;
 
-  footer.appendChild(link);
-  article.append(meta, title, subtitle, desc, footer);
+  footer.append(detailsBtn, link);
+  article.append(top, footer);
   return article;
 }
 
-function initProjectFilters() {
+function initProjectsAndModal() {
   const grid = document.getElementById('projectsGrid');
   const countEl = document.getElementById('projectsCount');
   const tabButtons = document.querySelectorAll('[data-project-filter]');
+  const modal = document.getElementById('projectModal');
+  const closeBtn = document.getElementById('closeProjectModal');
+  const modalTitle = document.getElementById('projectModalTitle');
+  const modalMeta = document.getElementById('projectModalMeta');
+  const modalDesc = document.getElementById('projectModalDesc');
+  const modalTopics = document.getElementById('projectModalTopics');
+  const modalStack = document.getElementById('projectModalStack');
+  const modalExternalLink = document.getElementById('projectModalLink');
+
+  let lastFocused = null;
+
+  function openProjectModal(project, triggerEl) {
+    if (!modal || !project) return;
+    lastFocused = triggerEl || document.activeElement;
+
+    if (modalTitle) modalTitle.textContent = project.title;
+    if (modalMeta) modalMeta.textContent = `${project.categoryLabel} · ${project.subtitle} · ${project.status}`;
+    if (modalDesc) modalDesc.textContent = project.description;
+    if (modalStack) modalStack.textContent = (project.stack || []).join(' · ');
+    if (modalTopics) {
+      modalTopics.replaceChildren(
+        ...(project.topics || []).map((topic) => {
+          const li = document.createElement('li');
+          li.textContent = topic;
+          return li;
+        })
+      );
+    }
+    if (modalExternalLink) {
+      modalExternalLink.setAttribute('href', project.href);
+      modalExternalLink.textContent = project.linkLabel;
+    }
+
+    if (typeof modal.showModal === 'function') {
+      if (!modal.open) modal.showModal();
+    } else {
+      modal.setAttribute('open', '');
+    }
+    document.body.classList.add('modal-open');
+    closeBtn?.focus();
+  }
+
+  function closeProjectModal() {
+    if (!modal) return;
+    if (typeof modal.close === 'function') {
+      if (modal.open) modal.close();
+    } else {
+      modal.removeAttribute('open');
+    }
+    document.body.classList.remove('modal-open');
+    if (lastFocused && typeof lastFocused.focus === 'function') {
+      lastFocused.focus();
+    }
+  }
+
+  closeBtn?.addEventListener('click', closeProjectModal);
+  modal?.addEventListener('click', (event) => {
+    if (event.target === modal) closeProjectModal();
+  });
+  modal?.addEventListener('close', () => {
+    document.body.classList.remove('modal-open');
+  });
+
   if (!grid || !tabButtons.length) return;
 
   function applyFilter(category) {
     const filtered = filterProjects(PROJECTS, category);
-    grid.replaceChildren(...filtered.map(renderProjectCard));
+    grid.replaceChildren(
+      ...filtered.map((project) => renderProjectCard(project, openProjectModal))
+    );
 
     if (countEl) {
       countEl.textContent = `Showing ${filtered.length} of ${PROJECTS.length} items`;
@@ -77,6 +159,15 @@ function initProjectFilters() {
     btn.addEventListener('click', () => {
       const category = btn.getAttribute('data-project-filter') || 'all';
       applyFilter(category);
+    });
+  });
+
+  // Wire initial SSR buttons before hydration if present
+  grid.querySelectorAll('[data-open-project]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-open-project');
+      const project = getProjectById(PROJECTS, id);
+      if (project) openProjectModal(project, btn);
     });
   });
 
@@ -205,6 +296,44 @@ function initCertificateModal() {
   });
 }
 
+function initThemeToggle() {
+  const btn = document.getElementById('themeToggleBtn');
+  const label = document.getElementById('themeToggleLabel');
+  if (!btn) return;
+
+  function applyTheme(theme) {
+    const resolved = resolveTheme(theme);
+    document.documentElement.setAttribute('data-theme', resolved);
+    btn.setAttribute('aria-pressed', resolved === 'light' ? 'true' : 'false');
+    if (label) {
+      label.textContent = resolved === 'light' ? 'Dark Mode' : 'Light Mode';
+    }
+    btn.setAttribute(
+      'aria-label',
+      resolved === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
+    );
+  }
+
+  let initial = 'dark';
+  try {
+    initial = resolveTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
+  } catch {
+    initial = 'dark';
+  }
+  applyTheme(initial);
+
+  btn.addEventListener('click', () => {
+    const current = resolveTheme(document.documentElement.getAttribute('data-theme'));
+    const next = toggleTheme(current);
+    applyTheme(next);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // Ignore storage failures in restricted contexts
+    }
+  });
+}
+
 function initMobileNavigation() {
   const toggleBtn = document.getElementById('menuToggle');
   const navDrawer = document.getElementById('mobileNavDrawer');
@@ -258,6 +387,25 @@ function initCopyButtons() {
   });
 }
 
+function initContactPresets() {
+  const presetButtons = document.querySelectorAll('[data-contact-preset]');
+  const subjectInput = document.getElementById('subject');
+  if (!presetButtons.length || !subjectInput) return;
+
+  presetButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const subjectText = btn.getAttribute('data-contact-preset') || '';
+      subjectInput.value = subjectText;
+      presetButtons.forEach((b) => {
+        const active = b === btn;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      subjectInput.focus();
+    });
+  });
+}
+
 function initContactForm() {
   const form = document.getElementById('contactForm');
   const statusEl = document.getElementById('formMessage');
@@ -305,6 +453,10 @@ function initContactForm() {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Send Message';
     form.reset();
+    document.querySelectorAll('[data-contact-preset]').forEach((b) => {
+      b.classList.remove('is-active');
+      b.setAttribute('aria-pressed', 'false');
+    });
   });
 }
 
@@ -335,11 +487,13 @@ function initPortraitFallback() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initProjectFilters();
+  initThemeToggle();
+  initProjectsAndModal();
   initSkillFilters();
   initCertificateModal();
   initMobileNavigation();
   initCopyButtons();
+  initContactPresets();
   initContactForm();
   initScrollProgress();
   initPortraitFallback();

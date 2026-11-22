@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CERTIFICATE_ASSET_PATH,
+  CONTACT_PRESETS,
   EDUCATION,
   PROFILE,
   PROFILE_PHOTO,
@@ -11,6 +12,9 @@ import {
   SOCIAL_LINKS,
   filterProjects,
   filterSkills,
+  getProjectById,
+  resolveTheme,
+  toggleTheme,
   validateContactForm,
   buildMailtoHref,
 } from '../public/js/portfolioData.js';
@@ -125,4 +129,24 @@ test('validateContactForm rejects invalid input and accepts valid messages', () 
 test('education status reflects 2nd Year student', () => {
   assert.equal(EDUCATION[0].period, 'Ongoing · 2nd Year');
   assert.equal(/1st\s*Year/i.test(EDUCATION[0].period), false);
+});
+
+test('getProjectById returns detailed topics and stack for each project', () => {
+  const ds = getProjectById(PROJECTS, 'data-structures-repo');
+  assert.ok(ds);
+  assert.ok(Array.isArray(ds.topics) && ds.topics.length >= 3);
+  assert.ok(Array.isArray(ds.stack) && ds.stack.includes('C Programming'));
+  assert.equal(getProjectById(PROJECTS, 'nonexistent'), null);
+});
+
+test('theme helpers resolve defaults and toggle cleanly between dark and light', () => {
+  assert.equal(resolveTheme(null), 'dark');
+  assert.equal(resolveTheme('light'), 'light');
+  assert.equal(toggleTheme('dark'), 'light');
+  assert.equal(toggleTheme('light'), 'dark');
+});
+
+test('contact presets provide non-empty subjects', () => {
+  assert.ok(CONTACT_PRESETS.length >= 3);
+  assert.ok(CONTACT_PRESETS.every((p) => p.label.length > 0 && p.subject.length >= 3));
 });

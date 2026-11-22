@@ -53,6 +53,12 @@ export const PROJECTS = [
     status: 'Live Deployment',
     description:
       'Interactive web application built as part of the Algorithm Course, translating algorithmic thinking into a live deployed experience.',
+    stack: ['HTML & CSS', 'Algorithmic Logic', 'Vercel'],
+    topics: [
+      'Interactive web interface built for the Algorithm Course',
+      'Applying structured algorithmic logic to a live user-facing experience',
+      'Deployed publicly for demonstration and coursework review',
+    ],
     linkLabel: 'View Live Project',
     href: 'https://range-of-legends.vercel.app/',
   },
@@ -65,6 +71,13 @@ export const PROJECTS = [
     status: 'Completed',
     description:
       'Completed Data Structures implementations covering arrays, linked lists, stacks, queues, trees, and foundational problem-solving patterns.',
+    stack: ['C Programming', 'C++', 'GitHub'],
+    topics: [
+      'Arrays, strings, and pointer-based memory manipulation',
+      'Singly and doubly linked lists',
+      'Stacks, queues, and linear structure operations',
+      'Trees, traversals, and foundational search structures',
+    ],
     linkLabel: 'View Repository',
     href: 'https://github.com/Akash-Ahmed07/Data-Structures',
   },
@@ -77,6 +90,13 @@ export const PROJECTS = [
     status: 'Completed',
     description:
       'Completed Algorithm implementations covering sorting, searching, recursion, greedy strategies, graph traversal, and dynamic programming.',
+    stack: ['C Programming', 'C++', 'GitHub'],
+    topics: [
+      'Sorting & binary search variations',
+      'Recursion, divide-and-conquer & greedy algorithms',
+      'Graph representations, BFS, DFS & shortest paths',
+      'Dynamic programming fundamentals & complexity analysis',
+    ],
     linkLabel: 'View Repository',
     href: 'https://github.com/Akash-Ahmed07/Algorithm-',
   },
@@ -229,6 +249,13 @@ export const SOCIAL_LINKS = [
   },
 ];
 
+export const CONTACT_PRESETS = [
+  { id: 'research', label: 'Research Inquiry', subject: 'Research Collaboration Inquiry' },
+  { id: 'aiml', label: 'AI/ML Collaboration', subject: 'AI/ML Study & Project Collaboration' },
+  { id: 'software', label: 'Software Project', subject: 'Software Development Opportunity' },
+  { id: 'hello', label: 'General Hello', subject: 'Connecting from Your Portfolio' },
+];
+
 /**
  * Filter skills by category key ('all', 'ai-programming', 'web-core').
  */
@@ -245,6 +272,28 @@ export function filterProjects(projects, category) {
   if (!Array.isArray(projects)) return [];
   if (!category || category === 'all') return projects;
   return projects.filter((project) => project.category === category);
+}
+
+/**
+ * Look up a project by its id.
+ */
+export function getProjectById(projects, projectId) {
+  if (!Array.isArray(projects) || !projectId) return null;
+  return projects.find((project) => project.id === projectId) || null;
+}
+
+/**
+ * Resolve theme preference to 'dark' or 'light'.
+ */
+export function resolveTheme(storedTheme) {
+  return storedTheme === 'light' ? 'light' : 'dark';
+}
+
+/**
+ * Toggle between 'dark' and 'light'.
+ */
+export function toggleTheme(currentTheme) {
+  return currentTheme === 'light' ? 'dark' : 'light';
 }
 
 /**
