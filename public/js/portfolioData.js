@@ -161,7 +161,7 @@ export const EDUCATION = [
   {
     degree: 'B.Sc in Computer Science & Engineering',
     institution: 'Leading University (LU)',
-    period: 'Ongoing · 1st Year',
+    period: 'Ongoing · 2nd Year',
     outcome: 'Currently Pursuing',
   },
   {

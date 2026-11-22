@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CERTIFICATE_ASSET_PATH,
+  EDUCATION,
   PROFILE,
   PROFILE_PHOTO,
   PROJECTS,
@@ -119,4 +120,9 @@ test('validateContactForm rejects invalid input and accepts valid messages', () 
   assert.equal(valid.valid, true);
   const mailto = buildMailtoHref(PROFILE.email, valid.sanitized);
   assert.ok(mailto.startsWith(`mailto:${PROFILE.email}?subject=`));
+});
+
+test('education status reflects 2nd Year student', () => {
+  assert.equal(EDUCATION[0].period, 'Ongoing · 2nd Year');
+  assert.equal(/1st\s*Year/i.test(EDUCATION[0].period), false);
 });
