@@ -26,6 +26,8 @@ test('skills list includes requested AI/ML, DSA, and core skills and excludes MS
   assert.ok(names.includes('Pandas'));
   assert.ok(names.includes('NumPy'));
   assert.ok(names.includes('Data Structures & Algorithms'));
+  assert.ok(names.includes('C++ for Competitive Programming'));
+  assert.ok(names.includes('Machine Learning (Learning)'));
 
   const htmlCss = SKILLS.find((s) => s.name === 'HTML & CSS');
   assert.equal(htmlCss?.level, 75);
@@ -33,6 +35,11 @@ test('skills list includes requested AI/ML, DSA, and core skills and excludes MS
   const basicComputer = SKILLS.find((s) => s.name === 'Basic Computer Operation');
   assert.equal(basicComputer?.level, 85);
 
+  assert.equal(
+    SKILLS.some((s) => /C\+\+\s*\(Learning\)/i.test(s.name)),
+    false,
+    'C++ (Learning) should be removed'
+  );
   assert.equal(
     SKILLS.some((s) => /ms\s*word/i.test(s.name)),
     false,
